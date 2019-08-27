@@ -67,6 +67,10 @@ def main():
         print("Invalid args")
         exit()
 
+    if min < 1 or max > (2**16 - 1):
+        print("Range not allowed")
+        exit()
+
     if tcp == True:
         port_scan(ip, min, max, ConnectionMethod.TCP)
 
