@@ -7,6 +7,15 @@ from enum import Enum
 def help():
     raise NotImplementedError
 
+class ScanStatus:
+    def __init__(self):
+        self.open_ports = list()
+        self.closed_ports = list()
+
+    def __init__(self, open_ports: list, closed_ports: list):
+        self.open_ports = open_ports
+        self.closed_ports = closed_ports
+
 class ArgumentParser:
     def __init__(self):
         self.min = self.max = self.ip = None
@@ -34,7 +43,7 @@ class ArgumentParser:
             elif re.match(r"^(\d{1,3}\.){3}\d{1,3}$", arg):
                 self.ip = arg
 
-    def valid(self):
+    def has_valid_args(self):
         return None not in (self.min, self.max, self.ip) and (self.tcp or self.udp)
     
     def has_allowed_port_range(self):
@@ -45,16 +54,16 @@ class ConnectionMethod(Enum):
     UDP = "UDP"
 
 class PortScanner:
-    def __init__(self, ip: str, port_range: tuple):
+    def __init__(self, ip: str, ports: tuple):
         self.ip = ip
-        self.port_range = port_range
+        self.ports = ports
 
     # TODO: Create threads for every port scan
     def scan(self, method: ConnectionMethod):
         print("Scanning {} ports at {}".format(method.value, self.ip))
         start = datetime.datetime.now()
 
-        for port in self.port_range:
+        for port in self.ports:
             if method == ConnectionMethod.TCP:
                 self.__tcp_scan__(port)
             
@@ -69,16 +78,12 @@ class PortScanner:
         con.settimeout(0.1)
         dest = (self.ip, port)
 
-        try:
-            if con.connect_ex(dest) == 0:
-                print("TCP port {} is open!".format(port))
-
-        except socket.timeout as e:
-            print(e)
-
-        finally:
-            con.close()
+        if con.connect_ex(dest) == 0:
+            print("TCP port {} is open!".format(port))
+        
+        con.close()
     
+    # TODO: UDP scan
     def __udp_scan__(self, port: int):
         raise NotImplementedError
         ''' con = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -99,7 +104,7 @@ class PortScanner:
 def main():
     arg_parser = ArgumentParser()
 
-    if not arg_parser.valid():
+    if not arg_parser.has_valid_args():
         print("Invalid args")
         exit()
 
@@ -107,7 +112,7 @@ def main():
         print("Range not allowed")
         exit()
     
-    ps = PortScanner(arg_parser.ip, tuple(range(arg_parser.min, arg_parser.max)))
+    ps = PortScanner(arg_parser.ip, tuple(range(arg_parser.min, arg_parser.max + 1)))
 
     if arg_parser.tcp:
         ps.scan(ConnectionMethod.TCP)
