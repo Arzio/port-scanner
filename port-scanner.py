@@ -5,19 +5,15 @@ import socket
 from enum import Enum
 
 class ConnectionMethod(Enum):
-    TCP = 1,
-    UDP = 2
+    TCP = "TCP",
+    UDP = "UDP"
 
 def help():
     raise NotImplementedError
 
+# TODO: Create threads for every port scan
 def port_scan(ip: str, min: int, max: int, method: ConnectionMethod):
-    if method == ConnectionMethod.TCP:
-        name = "TCP"
-    elif method == ConnectionMethod.UDP:
-        name = "UDP"
-
-    print("Scanning {} ports at {}".format(name, ip))
+    print("Scanning {} ports at {}".format(method.name, ip))
     start = datetime.datetime.now()
     
     for port in range(min, max + 1):
@@ -25,18 +21,20 @@ def port_scan(ip: str, min: int, max: int, method: ConnectionMethod):
             con = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         
         elif method == ConnectionMethod.UDP:
+            # FIXME: socket connection always returning 0 on connect_ex
             con = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
         dest = (ip, port)
 
         if con.connect_ex(dest) == 0:
-            print("{} port {} is open!".format(name, port))
+            print("{} port {} is open!".format(method.name, port))
 
         con.close()
 
     time_taken = (datetime.datetime.now() - start).total_seconds()
-    print("{} scanning finished, it took {} seconds".format(name, time_taken))
+    print("{} scanning finished, it took {} seconds".format(method.name, time_taken))
 
+# TODO: Implement observer design pattern
 def main():
     min = max = ip = None
     udp = tcp = False
@@ -44,14 +42,14 @@ def main():
     for arg_index in range(len(sys.argv)):
         arg = sys.argv[arg_index]
 
-        if arg in ("-h", "--help"):
+        if arg in ("-h", "-H", "--help"):
             help()
             exit()
 
-        elif arg in ("-f", "--from"):
+        elif arg in ("-f", "-F", "--from"):
             min = int(sys.argv[arg_index + 1])
 
-        elif arg in ("-t", "--to"):
+        elif arg in ("-t", "-T", "--to"):
             max = int(sys.argv[arg_index + 1])
 
         elif arg == "--udp":
