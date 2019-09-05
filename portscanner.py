@@ -2,7 +2,7 @@ import sys
 import re
 import datetime
 import socket
-from json import JSONEncoder
+import json
 from enum import Enum
 
 def help() -> None:
@@ -13,7 +13,8 @@ def help() -> None:
 
 class ConnectionMethod(Enum):
     '''
-    Enum que representa os tipos de protocolos/métodos para fazer scan em portas
+    Enum (classe com constantes que, por debaixo dos panos, são enumeradas) que representa 
+    os tipos de protocolos/métodos para fazer scan em portas
     '''
     TCP = 'TCP'
     UDP = 'UDP'
@@ -24,14 +25,27 @@ class ScanResult:
     - Protocolo/método usado para scannear
     - Se estava aberta ou não
     '''
+    method: ConnectionMethod
+    ip: str
+    port: int
+    open: bool
+
     def __init__(self, method: ConnectionMethod, ip: str, port: int):
         self.method = method
         self.ip = ip
         self.port = port
-        self.open: bool = None
+        self.open = None
     
-    def __str__(self):
+    def __str__(self) -> str:
+        '''
+        Método que será chamado ao transformar o objeto em string, como em "print(obj)"
+
+        TL;DR: um toString()
+        '''
         return "{}\t{}\t{}\t{}".format(self.method.value, self.ip, self.port, self.open)
+    
+    def __dict__(self) -> dict:
+        return { 'method': self.method.value, 'ip': self.ip, 'port': self.port, 'open': self.open }
 
 class ArgumentParser:
     '''
@@ -46,17 +60,18 @@ class ArgumentParser:
     o range de ports é [200; 300], o IP a ser scanneado é 8.8.8.8 e deverá ser feito um scan TCP
 
     Note que dá para fazer um scan TCP e/ou UDP, além de receber um JSON como output da ferramenta
-    e que min, max, ip, (tcp || udp) são argumentos requeridos para a ferramenta funcionar
-
     '''
+    min: int
+    max: int
+    ip: str
+    udp: bool
+    tcp: bool
+    json: bool
 
     def __init__(self):
         '''
         Construtor que verifica os argumentos relacionados à ferramenta vindo da linha de comando
         '''
-        self.min: int = None
-        self.max: int = None
-        self.ip: str = None
         self.udp = self.tcp = self.json = False
 
         for arg_index in range(len(sys.argv)):
@@ -82,21 +97,46 @@ class ArgumentParser:
                 self.json = True
 
             # Isso é um RegEx para verificar se o argumento de IP está mesmo no padrão de um IP
+            # Mais sobre RegEx: https://dev.to/catherinecodes/a-regex-cheatsheet-for-all-those-regex-haters-and-lovers--2cj1
+
             elif re.match(r"^(\d{1,3}\.){3}\d{1,3}$", arg):
                 self.ip = arg
 
     def has_valid_args(self) -> bool:
+        '''
+        Verifica se há argumentos preenchidos para que a ferramenta execute
+
+        min, max, ip, tcp e/ou udp são argumentos requeridos para a ferramenta funcionar
+        '''
         return None not in (self.min, self.max, self.ip) and (self.tcp or self.udp)
     
     def has_allowed_port_range(self) -> bool:
+        '''
+        Verifica se o range de portas TCP/UDP é valido (visto que há portas de 1 até 2^16 - 1)
+        '''
         return self.min <= self.max and self.min >= 1 and self.max <= (2**16 - 1)
 
 class PortScanner:
+    '''
+    Classe que se responsabilizará por fazer os scans
+
+    Precisa do ip do destino e uma coleção de portas a se fazer o scan
+    '''
+    ip: str
+    ports: tuple
+
     def __init__(self, ip: str, ports: tuple):
         self.ip = ip
         self.ports = ports
 
-    def __tcp_scan__(self, port: int) -> ScanResult:
+    def __tcp_scan(self, port: int) -> ScanResult:
+        '''
+        Método privado (que somente a classe e seus objetos conhecem) para fazer o scan por TCP
+
+        Cria um socket, e tenta conectar com o destino (ip e porta) em 500ms. Retorna um ScanResult com
+        as informações do scan, sendo que o atributo open será True caso o socket consiga conexão, False 
+        em qualquer outro caso
+        '''
         con = socket.socket()
         con.settimeout(0.5)
         dest = (self.ip, port)
@@ -113,7 +153,10 @@ class PortScanner:
         return scan_result
     
     # TODO: UDP scan
-    def __udp_scan__(self, port: int) -> ScanResult:
+    def __udp_scan(self, port: int) -> ScanResult:
+        '''
+        Método privado (que somente a classe e seus objetos conhecem) para fazer o scan por UDP
+        '''
         raise NotImplementedError
         con = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         con.settimeout(0.5)
@@ -129,26 +172,36 @@ class PortScanner:
 
     # TODO: Create threads for every port scan
     def scan(self, method: ConnectionMethod) -> None:
+        '''
+        Realiza o scan baseado no protocolo/método escolhido e nas portas do objeto
+        
+        Exibe os ScanResult como output de texto plano
+        '''
         print("METHOD\tIP\t\tPORT\tOPEN")
 
         for port in self.ports:
             if method == ConnectionMethod.TCP:
-                scan_result = self.__tcp_scan__(port)
+                scan_result = self.__tcp_scan(port)
             
             elif method == ConnectionMethod.UDP:
-                scan_result = self.__udp_scan__(port)
+                scan_result = self.__udp_scan(port)
             
             print(scan_result)
         
     def scan_to_list(self, method: ConnectionMethod) -> list:
+        '''
+        Realiza o scan baseado no protocolo/método escolhido e nas portas do objeto
+        
+        Retorna uma lista de ScanResult
+        '''
         scan_results = list()
 
         for port in self.ports:
             if method == ConnectionMethod.TCP:
-                scan_result = self.__tcp_scan__(port)
+                scan_result = self.__tcp_scan(port)
             
             elif method == ConnectionMethod.UDP:
-                scan_result = self.__udp_scan__(port)
+                scan_result = self.__udp_scan(port)
             
             scan_results.append(scan_result)
         
@@ -172,13 +225,12 @@ def main() -> None:
         results = list()
 
         if arg_parser.tcp:
-            results.append(ps.scan_to_list(ConnectionMethod.TCP))
+            results.extend(ps.scan_to_list(ConnectionMethod.TCP))
         
         if arg_parser.udp:
-            results.append(ps.scan_to_list(ConnectionMethod.UDP))
+            results.extend(ps.scan_to_list(ConnectionMethod.UDP))
 
-        # FIXME: ScanResult isn't serializable
-        json_object = JSONEncoder().encode(results)
+        json_object = json.dumps(results, default = lambda sr: sr.__dict__(), indent = 4)
         print(json_object)
 
     else:
