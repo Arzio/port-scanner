@@ -1,4 +1,5 @@
-from flask import Flask, request, jsonify, Response
+# DEPRECATED
+'''from flask import Flask, request, jsonify, Response
 from portscanner import ArgumentParser, PortScanner, ConnectionMethod
 
 app = Flask(__name__)
@@ -29,4 +30,4 @@ def scan() -> Response:
     return Response(status = 406)
 
 if __name__ == '__main__':
-    app.run()
+    app.run()'''
