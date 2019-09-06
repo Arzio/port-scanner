@@ -25,16 +25,12 @@ class ScanResult:
     - Protocolo/método usado para scannear
     - Se estava aberta ou não
     '''
-    method: ConnectionMethod
-    ip: str
-    port: int
-    open: bool
 
     def __init__(self, method: ConnectionMethod, ip: str, port: int):
         self.method = method
         self.ip = ip
         self.port = port
-        self.open = None
+        self.open: bool = None
     
     def __str__(self) -> str:
         '''
@@ -61,17 +57,14 @@ class ArgumentParser:
 
     Note que dá para fazer um scan TCP e/ou UDP, além de receber um JSON como output da ferramenta
     '''
-    min: int
-    max: int
-    ip: str
-    udp: bool
-    tcp: bool
-    json: bool
 
     def __init__(self):
         '''
         Construtor que verifica os argumentos relacionados à ferramenta vindo da linha de comando
         '''
+        self.min = 0
+        self.max = 0
+        self.ip = ''
         self.udp = self.tcp = self.json = False
 
         for arg_index in range(len(sys.argv)):
@@ -99,7 +92,7 @@ class ArgumentParser:
             # Isso é um RegEx para verificar se o argumento de IP está mesmo no padrão de um IP
             # Mais sobre RegEx: https://dev.to/catherinecodes/a-regex-cheatsheet-for-all-those-regex-haters-and-lovers--2cj1
 
-            elif re.match(r"^(\d{1,3}\.){3}\d{1,3}$", arg):
+            elif re.match(r"^[0-2]?[0-9]?[1-9](\.[0-2]?[0-9]?[0-9]){3}$", arg):
                 self.ip = arg
 
     def has_valid_args(self) -> bool:
@@ -108,7 +101,7 @@ class ArgumentParser:
 
         min, max, ip, tcp e/ou udp são argumentos requeridos para a ferramenta funcionar
         '''
-        return None not in (self.min, self.max, self.ip) and (self.tcp or self.udp)
+        return 0 not in (self.min, self.max) and self.ip != '' and (self.tcp or self.udp)
     
     def has_allowed_port_range(self) -> bool:
         '''
@@ -122,8 +115,6 @@ class PortScanner:
 
     Precisa do ip do destino e uma coleção de portas a se fazer o scan
     '''
-    ip: str
-    ports: tuple
 
     def __init__(self, ip: str, ports: tuple):
         self.ip = ip
@@ -138,7 +129,7 @@ class PortScanner:
         em qualquer outro caso
         '''
         con = socket.socket()
-        con.settimeout(0.5)
+        con.settimeout(1)
         dest = (self.ip, port)
         scan_result = ScanResult(ConnectionMethod.TCP, self.ip, port)
 
@@ -152,19 +143,23 @@ class PortScanner:
 
         return scan_result
     
-    # TODO: UDP scan
     def __udp_scan(self, port: int) -> ScanResult:
         '''
         Método privado (que somente a classe e seus objetos conhecem) para fazer o scan por UDP
         '''
-        raise NotImplementedError
         con = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        con.settimeout(0.5)
+        con.settimeout(1)
         dest = (self.ip, port)
         scan_result = ScanResult(ConnectionMethod.UDP, self.ip, port)
 
-        # Scan algorithm
+        try:
+            con.sendto(bytes(0), dest)
+            data, addr = con.recvfrom(1024)
+            scan_result.open = True
 
+        except socket.timeout:
+            scan_result.open = False
+        
         con.close()
 
         return scan_result
@@ -241,4 +236,8 @@ def main() -> None:
             ps.scan(ConnectionMethod.UDP)
 
 if __name__ == '__main__':
-    main()
+    try:
+        main()
+    
+    except KeyboardInterrupt:
+        exit()
