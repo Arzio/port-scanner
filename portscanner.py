@@ -124,7 +124,7 @@ class PortScanner:
         '''
         Método privado (que somente a classe e seus objetos conhecem) para fazer o scan por TCP
 
-        Cria um socket, e tenta conectar com o destino (ip e porta) em 500ms. Retorna um ScanResult com
+        Cria um socket, e tenta conectar com o destino (ip e porta) em 1s. Retorna um ScanResult com
         as informações do scan, sendo que o atributo open será True caso o socket consiga conexão, False 
         em qualquer outro caso
         '''
@@ -146,6 +146,10 @@ class PortScanner:
     def __udp_scan(self, port: int) -> ScanResult:
         '''
         Método privado (que somente a classe e seus objetos conhecem) para fazer o scan por UDP
+
+        Cria um socket, e tenta enviar e receber algo pelo destino (ip e porta) em 1s. Retorna um ScanResult com
+        as informações do scan, sendo que o atributo open será True caso o socket consiga receber alguma informação, False no caso
+        de timeout      
         '''
         con = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         con.settimeout(1)
@@ -154,7 +158,7 @@ class PortScanner:
 
         try:
             con.sendto(bytes(0), dest)
-            data, addr = con.recvfrom(1024)
+            con.recvfrom(1024)
             scan_result.open = True
 
         except socket.timeout:
@@ -166,13 +170,17 @@ class PortScanner:
 
 
     # TODO: Create threads for every port scan
+    '''
+    See:
+    https://diogommartins.wordpress.com/2017/04/07/concorrencia-e-paralelismo-threads-multiplos-processos-e-asyncio-parte-1/
+    https://diogommartins.wordpress.com/2017/04/22/concorrencia-e-paralelismo-threads-multiplos-processos-e-asyncio-parte-2/
+    '''
     def scan(self, method: ConnectionMethod) -> None:
         '''
         Realiza o scan baseado no protocolo/método escolhido e nas portas do objeto
         
         Exibe os ScanResult como output de texto plano
         '''
-        print("METHOD\tIP\t\tPORT\tOPEN")
 
         for port in self.ports:
             if method == ConnectionMethod.TCP:
@@ -229,6 +237,8 @@ def main() -> None:
         print(json_object)
 
     else:
+        print("METHOD\tIP\t\tPORT\tOPEN")
+
         if arg_parser.tcp:
             ps.scan(ConnectionMethod.TCP)
         
