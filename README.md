@@ -1,7 +1,7 @@
 # Port Scanner
 
 ## Sobre
-O projeto é um analisador simples de portas TCP e UDP, que verifica se as portas recebidas por input do usuário estão aberta ou fechadas.
+O projeto é um analisador simples de portas TCP, que verifica se as portas recebidas por input do usuário estão aberta ou fechadas.
 
 Ainda, a ferramenta pode converter o output da análise em um JSON, caso seja necessário guardá-lo em um formato de serialização universal.
 

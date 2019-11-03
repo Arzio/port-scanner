@@ -7,14 +7,16 @@ def help_message() -> None:
     Função que exibirá um informativo de como usar a ferramenta, junto de seus argumentos
     """
     print(
-        'Um analisador de portas TCP e UDP\n\n'
+        'Um analisador de portas TCP\n\n'
         'Uso: portscanner.py [opções]\n\n'
         'Opções:\n'
         '\t--help: Exibe essa mensagem\n'
         '\t--ip: Representa o IP do host a ser analisado. É um argumento obrigatório.\n'
-        '\t--ports: As portas a serem scanneadas. Devem ser separadas por vírgula. É um argumento obrigatório. Ex: "21,22,80,8080"\n'
-        '\t--tcp e --udp: Informam o tipo de portas a serem analisadas. No mínimo uma deve ser declarada.\n'
+        '\t--ports: As portas a serem scanneadas. Devem ser separadas por vírgula. '
+        'É um argumento obrigatório. Ex: "21,22,80,8080"\n'
+        '\t--tcp: Indica que o scan deve ser feito sobre protocolo TCP. É um argumento obrigatório.\n'
         '\t--json: Converte o output da aplicação num JSON.\n\n'
+        '\t--threads: Indica o número de thread workers que devem criados para o scan. O padrão é quatro.'
         'Exemplo de uso da aplicação: portscanner.py --ip 8.8.8.8 --ports 21,22,80,8080 --tcp'
     )
 
@@ -33,7 +35,7 @@ class ArgsParser:
     Ex: "python portscanner.py --ip 8.8.8.8 --ports 21,22,80,8080 --tcp" fará com que o algoritmo saiba que
     o IP e portas a serem scanneadas é 8.8.8.8 e (21,22,80,8080), respectivamente, e deverá ser feito um scan TCP
 
-    Note que dá para fazer um scan TCP e/ou UDP, além de receber um JSON como output da ferramenta
+    Note que dá para receber um JSON como output da ferramenta
     """
 
     def __init__(self):
@@ -42,7 +44,8 @@ class ArgsParser:
         """
         self.ip = ''
         self.ports = ()
-        self.udp = self.tcp = self.json = False
+        self.tcp = self.json = False
+        self.threads = 4
 
         for arg_index in range(len(sys.argv)):
             arg = sys.argv[arg_index]
@@ -55,9 +58,6 @@ class ArgsParser:
                 if re.match(r"^[0-2]?[0-9]?[1-9](\.[0-2]?[0-9]?[0-9]){3}$", supposed_ip):
                     self.ip = supposed_ip
 
-            elif arg == '--udp':
-                self.udp = True
-
             elif arg == '--tcp':
                 self.tcp = True
 
@@ -67,17 +67,20 @@ class ArgsParser:
             elif arg == '--ports':
                 self.ports = tuple(map(int, sys.argv[arg_index + 1].split(',')))
 
+            elif arg == '--threads':
+                self.threads = int(sys.argv[arg_index + 1])
+
     def has_valid_args(self) -> bool:
         """
         Verifica se há argumentos preenchidos para que a ferramenta execute
 
-        min, max, ip, tcp e/ou udp são argumentos requeridos para a ferramenta funcionar
+        ports, ip e tcp são argumentos requeridos para a ferramenta funcionar
         """
-        return self.ports and self.ip != '' and (self.tcp or self.udp)
+        return self.ports and self.ip != '' and self.tcp
 
     def has_allowed_ports(self) -> bool:
         """
-        Verifica se o range de portas TCP/UDP é valido (visto que há portas de 1 até 2^16 - 1)
+        Verifica se o range de portas TCP é valido (visto que há portas de 1 até 2^16 - 1)
         """
         for port in self.ports:
             if 0 >= port >= 2 ** 16:
