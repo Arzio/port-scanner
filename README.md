@@ -1,11 +1,12 @@
 # Port Scanner
 
 ## Sobre
-Port Scanner é um analisador simples de portas TCP e UDP, que utiliza Python 3.7.x.
+O projeto é um analisador simples de portas TCP e UDP, que verifica se as portas recebidas por input do usuário estão aberta ou fechadas.
+
+Ainda, a ferramenta pode converter o output da análise em um JSON, caso seja necessário guardá-lo em um formato de serialização universal.
 
 ## Pré-requisitos
-1. Python 3.7.x (outras versões ainda não foram testadas)
-2. Dockerfile
+1. ^Python 3.5
 
 ## Como instalar
 ### Instalando Python
@@ -15,11 +16,11 @@ Port Scanner é um analisador simples de portas TCP e UDP, que utiliza Python 3.
 
 * [Tutorial da Python Brasil para Linux](https://python.org.br/instalacao-linux/)
 
-### Dockerfile
-(Ainda aguardando implementação) | [Issue #2](https://github.com/felpesm/port-scanner/issues/2)
-
 ### Instalando o Port Scanner
-(Aguardando implementação do Dockerfile) | [Issue #2](https://github.com/felpesm/port-scanner/issues/2)
+- Clone o repositório;
+- Execute o arquivo [portscanner.py](portscanner.py) como argumento do python CLI ou apenas chame o mesmo;
+
+OBS: Informações de uso da ferramenta estão disponíveis através do argumento "--help'
 
 ## Menções importantes
 * [Técnicas de scan usadas pelo Nmap](https://nmap.org/book/man-port-scanning-techniques.html)

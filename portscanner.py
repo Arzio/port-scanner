@@ -1,25 +1,21 @@
 #!/usr/bin/env python3
 
 import json
-
-from args.argument_parser import ArgumentParser
-from scan.connection_method import ConnectionMethod
-from scan.port_scanner import PortScanner
+from portscanner.argsparser import ArgsParser, help_message
+from portscanner.core import ScanController, ConnectionMethod
 
 
-# TODO: Implement observer design pattern
 def main() -> None:
-    arg_parser = ArgumentParser()
+    arg_parser = ArgsParser()
 
     if not arg_parser.has_valid_args():
-        print('Invalid args')
+        help_message()
+
+    if not arg_parser.has_allowed_ports():
+        print('Some ports are forbidden')
         exit(1)
 
-    if not arg_parser.has_allowed_port_range():
-        print('Range not allowed')
-        exit(2)
-
-    ps = PortScanner(arg_parser.ip, tuple(range(arg_parser.min, arg_parser.max + 1)))
+    ps = ScanController(arg_parser.ip, arg_parser.ports)
 
     if arg_parser.json:
         results = list()
@@ -34,7 +30,7 @@ def main() -> None:
         print(json_object)
 
     else:
-        print("METHOD\tIP\t\tPORT\tOPEN")
+        print("METHOD/IP/PORT/OPEN")
 
         if arg_parser.tcp:
             ps.scan(ConnectionMethod.TCP)

@@ -1,10 +1,43 @@
 import socket
-
-from scan.connection_method import ConnectionMethod
-from scan.scan_result import ScanResult
+from enum import Enum
 
 
-class PortScanner:
+class ConnectionMethod(Enum):
+    """
+    Enum (classe com constantes que, por debaixo dos panos, são enumeradas) que representa
+    os tipos de protocolos/métodos para fazer scan em portas
+    """
+
+    TCP = 'TCP'
+    UDP = 'UDP'
+
+
+class ScanResult:
+    """
+    Classe que receberá informações do scan de um certo ip numa certa porta, como:
+    - Protocolo/método usado para scannear
+    - Se estava aberta ou não
+    """
+
+    def __init__(self, method: ConnectionMethod, ip: str, port: int):
+        self.method = method
+        self.ip = ip
+        self.port = port
+        self.open = False
+
+    def __str__(self) -> str:
+        """
+        Método que será chamado ao transformar o objeto em string, como em "print(obj)"
+
+        TL;DR: um toString() do Java, por exemplo
+        """
+        return "{}\t{}\t{}\t{}".format(self.method.value, self.ip, self.port, self.open)
+
+    def __dict__(self) -> dict:
+        return {'method': self.method.value, 'ip': self.ip, 'port': self.port, 'open': self.open}
+
+
+class ScanController:
     """
     Classe que se responsabilizará por fazer os scans
 
@@ -69,14 +102,12 @@ class PortScanner:
     https://diogommartins.wordpress.com/2017/04/07/concorrencia-e-paralelismo-threads-multiplos-processos-e-asyncio-parte-1/
     https://diogommartins.wordpress.com/2017/04/22/concorrencia-e-paralelismo-threads-multiplos-processos-e-asyncio-parte-2/
     '''
-
     def scan(self, method: ConnectionMethod) -> None:
         """
         Realiza o scan baseado no protocolo/método escolhido e nas portas do objeto
 
         Exibe os ScanResult como output de texto plano
         """
-
         for port in self.ports:
             if method == ConnectionMethod.TCP:
                 scan_result = self.__tcp_scan(port)
