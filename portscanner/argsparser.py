@@ -14,10 +14,9 @@ def help_message() -> None:
         '\t--ip: Representa o IP do host a ser analisado. É um argumento obrigatório.\n'
         '\t--ports: As portas a serem scanneadas. Devem ser separadas por vírgula. '
         'É um argumento obrigatório. Ex: "21,22,80,8080"\n'
-        '\t--tcp: Indica que o scan deve ser feito sobre protocolo TCP. É um argumento obrigatório.\n'
         '\t--json: Converte o output da aplicação num JSON.\n\n'
         '\t--threads: Indica o número de thread workers que devem criados para o scan. O padrão é quatro.'
-        'Exemplo de uso da aplicação: portscanner.py --ip 8.8.8.8 --ports 21,22,80,8080 --tcp'
+        'Exemplo de uso da aplicação: portscanner.py --ip 8.8.8.8 --ports 21,22,80,8080'
     )
 
     exit()
@@ -32,8 +31,8 @@ class ArgsParser:
 
     Ex: "python portscanner.py --help" fará com que o código execute a função help()
 
-    Ex: "python portscanner.py --ip 8.8.8.8 --ports 21,22,80,8080 --tcp" fará com que o algoritmo saiba que
-    o IP e portas a serem scanneadas é 8.8.8.8 e (21,22,80,8080), respectivamente, e deverá ser feito um scan TCP
+    Ex: "python portscanner.py --ip 8.8.8.8 --ports 21,22,80,8080" fará com que o algoritmo saiba que
+    o IP e portas a serem scanneadas é 8.8.8.8 e (21,22,80,8080)
 
     Note que dá para receber um JSON como output da ferramenta
     """
@@ -44,7 +43,7 @@ class ArgsParser:
         """
         self.ip = ''
         self.ports = ()
-        self.tcp = self.json = False
+        self.json = False
         self.threads = 4
 
         for arg_index in range(len(sys.argv)):
@@ -57,9 +56,6 @@ class ArgsParser:
                 supposed_ip = sys.argv[arg_index + 1]
                 if re.match(r"^[0-2]?[0-9]?[1-9](\.[0-2]?[0-9]?[0-9]){3}$", supposed_ip):
                     self.ip = supposed_ip
-
-            elif arg == '--tcp':
-                self.tcp = True
 
             elif arg == '--json':
                 self.json = True
@@ -74,16 +70,16 @@ class ArgsParser:
         """
         Verifica se há argumentos preenchidos para que a ferramenta execute
 
-        ports, ip e tcp são argumentos requeridos para a ferramenta funcionar
+        ports e ip são argumentos requeridos para a ferramenta funcionar
         """
-        return self.ports and self.ip != '' and self.tcp
+        return self.ports and self.ip != ''
 
     def has_allowed_ports(self) -> bool:
         """
         Verifica se o range de portas TCP é valido (visto que há portas de 1 até 2^16 - 1)
         """
         for port in self.ports:
-            if 0 >= port >= 2 ** 16:
+            if port <=0 or port >= 2 ** 16:
                 return False
 
         return self.ports and True

@@ -1,28 +1,36 @@
 import socket
+import errno
 from enum import Enum
 from multiprocessing.dummy import Pool as ThreadPool
 
 
-class ConnectionMethod(Enum):
+class ScanMethod(Enum):
     """
-    Enum (classe com constantes que, por debaixo dos panos, são enumeradas) que representa
-    os tipos de protocolos/métodos para fazer scan em portas
+    Enum que indica os métodos de análise suportados pelo programa
     """
-    TCP = 'TCP'
+    TCP_CON = 'Conn'
+
+class ConnectionStatus(Enum):
+    """
+    Enum que indica o status de análise de cada porta TCP
+    """
+    OPEN = 'Open'
+    CLOSED = 'Closed'
+    FILTERED = 'Filtered'
 
 
 class ScanResult:
     """
     Classe que receberá informações do scan de um certo ip numa certa porta, como:
-    - Protocolo/método usado para scannear
-    - Se estava aberta ou não
+    - Método usado para scannear
+    - Se estava aberta, fechada ou filtrada
     """
 
-    def __init__(self, method: ConnectionMethod, ip: str, port: int):
+    def __init__(self, method: ScanMethod,  ip: str, port: int):
         self.method = method
         self.ip = ip
         self.port = port
-        self.open = False
+        self.status = ConnectionStatus.CLOSED
 
     def __str__(self) -> str:
         """
@@ -30,10 +38,10 @@ class ScanResult:
 
         TL;DR: um toString() do Java, por exemplo
         """
-        return "{}\t{}\t{}\t{}".format(self.method.value, self.ip, self.port, self.open)
+        return "{}\t{}\t{}\t{}".format(self.method.value, self.ip, self.port, self.status.value)
 
     def __dict__(self) -> dict:
-        return {'method': self.method.value, 'ip': self.ip, 'port': self.port, 'open': self.open}
+        return {'method': self.method.value, 'ip': self.ip, 'port': self.port, 'status': self.status.value}
 
 
 class ScanController:
@@ -47,28 +55,35 @@ class ScanController:
         self.ip = ip
         self.ports = ports
 
-    def tcp_scan(self, port: int) -> ScanResult:
+    def __tcp_conn_scan(self, port: int) -> ScanResult:
         """
-        Método para fazer o scan por TCP
+        Método para fazer o scan por TCP connect
 
         Cria um socket, e tenta conectar com o destino (ip e porta) em 1s. Retorna um ScanResult com
-        as informações do scan, sendo que o atributo open será True caso o socket consiga conexão, False
-        em qualquer outro caso
+        as informações do scan, sendo que o atributo open será OPEN caso o socket consiga conexão, CLOSED
+        caso a conexão seja rejeitada, e FILTERED caso não haja resposta do target
         """
         con = socket.socket()
         con.settimeout(1)
         dest = (self.ip, port)
-        scan_result = ScanResult(ConnectionMethod.TCP, self.ip, port)
+        scan_result = ScanResult(ScanMethod.TCP_CON, self.ip, port)
 
-        if con.connect_ex(dest) == 0:
-            scan_result.open = True
-
+        con_result = con.connect_ex(dest)
         con.close()
+
+        if con_result == 0:
+            scan_result.status = ConnectionStatus.OPEN
+        
+        elif con_result == errno.ECONNRESET or con_result == errno.ECONNREFUSED or con_result == errno.ECONNABORTED:
+            scan_result.status = ConnectionStatus.CLOSED
+        
+        else:
+            scan_result.status = ConnectionStatus.FILTERED
 
         return scan_result
 
-    def print_scan_result(self, port: int):
-        scan_result = self.tcp_scan(port)
+    def __print_scan_result(self, port: int) -> None:
+        scan_result = self.__tcp_conn_scan(port)
         print(scan_result)
 
     def scan(self, threads_number: int) -> None:
@@ -78,7 +93,7 @@ class ScanController:
         Exibe os ScanResult como output de texto plano
         """
         pool = ThreadPool(threads_number)
-        pool.map(self.print_scan_result, self.ports)
+        pool.map(self.__print_scan_result, self.ports)
 
     def scan_to_list(self, threads_number: int) -> list:
         """
@@ -87,6 +102,6 @@ class ScanController:
         Retorna uma lista de ScanResult
         """
         pool = ThreadPool(threads_number)
-        results = pool.map(self.tcp_scan, self.ports)
+        results = pool.map(self.__tcp_conn_scan, self.ports)
 
         return results

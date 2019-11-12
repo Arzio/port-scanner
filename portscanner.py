@@ -13,7 +13,7 @@ def main() -> None:
         help_message()
 
     if not arg_parser.has_allowed_ports():
-        print('Some ports are forbidden')
+        print('There are given ports which doesnt exists')
         exit(1)
 
     ps = ScanController(arg_parser.ip, arg_parser.ports)
@@ -24,7 +24,7 @@ def main() -> None:
         print(json_object)
 
     else:
-        print("METHOD/IP/PORT/OPEN")
+        print("METHOD\tIP\t\tPORT\tSTATUS")
         ps.scan(arg_parser.threads)
 
 
