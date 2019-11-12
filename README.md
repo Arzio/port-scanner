@@ -1,7 +1,9 @@
 # Port Scanner
 
 ## Sobre
-O projeto é um analisador simples de portas TCP, que verifica se as portas recebidas por input do usuário estão abertas ou fechadas.
+O projeto é um analisador simples de portas TCP/IP, que verifica se as portas recebidas por input do usuário estão abertas, fechadas ou filtradas.
+
+No momento, a ferramenta só executa o método de análise TCP connect.
 
 Ainda, a ferramenta pode converter o output da análise em um JSON, caso seja necessário guardá-lo em um formato de serialização universal.
 
@@ -18,7 +20,14 @@ Ainda, a ferramenta pode converter o output da análise em um JSON, caso seja ne
 
 ### Instalando o Port Scanner
 - Clone o repositório;
-- Execute o arquivo [portscanner.py](portscanner.py) como argumento do python CLI ou apenas chame o mesmo.
+- Execute o arquivo [portscanner.py](portscanner.py).
+
+### Exemplos de uso
+```console
+python3 portscanner.py --ip 127.0.0.1 --ports 80,443
+python portscanner.py --ip 127.0.0.1 --ports 80,443
+./portscanner.py --ip 127.0.0.1 --ports 80,443
+```
 
 OBS: Informações de uso da ferramenta estão disponíveis ao executar o programa sem nenhum argumento ou ao chamar "--help".
 

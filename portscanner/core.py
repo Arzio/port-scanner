@@ -60,7 +60,7 @@ class ScanController:
         Método para fazer o scan por TCP connect
 
         Cria um socket, e tenta conectar com o destino (ip e porta) em 1s. Retorna um ScanResult com
-        as informações do scan, sendo que o atributo open será OPEN caso o socket consiga conexão, CLOSED
+        as informações do scan, sendo que o atributo status será OPEN caso o socket consiga conexão, CLOSED
         caso a conexão seja rejeitada, e FILTERED caso não haja resposta do target
         """
         con = socket.socket()

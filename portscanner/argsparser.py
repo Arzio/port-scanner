@@ -8,7 +8,7 @@ def help_message() -> None:
     """
     print(
         'Um analisador de portas TCP\n\n'
-        'Uso: portscanner.py [opções]\n\n'
+        'Uso: (./)portscanner.py [opções]\n\n'
         'Opções:\n'
         '\t--help: Exibe essa mensagem\n'
         '\t--ip: Representa o IP do host a ser analisado. É um argumento obrigatório.\n'
@@ -25,9 +25,9 @@ def help_message() -> None:
 class ArgsParser:
     """
     Classe que cuidará de analisar os argumentos recebidos por linha de comando referentes, talvez
-    necessários, para a execução da ferramenta.
+    necessários, a execução da ferramenta.
 
-    Ao ser instânciada, o construtor olhará os argv's (através do sys) buscando por strings nas condicionais
+    Ao ser instanciada, o construtor olhará o argv (através do sys) buscando por argumentos válidos nas condicionais
 
     Ex: "python portscanner.py --help" fará com que o código execute a função help()
 
@@ -76,7 +76,7 @@ class ArgsParser:
 
     def has_allowed_ports(self) -> bool:
         """
-        Verifica se o range de portas TCP é valido (visto que há portas de 1 até 2^16 - 1)
+        Verifica se o range de portas TCP/IP é valido (visto que há portas de 1 até 2^16 - 1)
         """
         for port in self.ports:
             if port <=0 or port >= 2 ** 16:
