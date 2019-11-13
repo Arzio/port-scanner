@@ -1,9 +1,9 @@
 # Port Scanner
 
 ## Sobre
-O projeto é um analisador simples de portas TCP/IP, que verifica se as portas de um certo IP, recebidas por input do usuário estão abertas e/ou filtradas ou fechadas.
+A ferramenta é um scanner de portas TCP/IP básico, que verifica se as portas de um certo IP, recebidas por input do usuário estão abertas e/ou filtradas e/ou fechadas.
 
-No momento, a ferramenta só executa a análise TCP por conexão ou UDP.
+No momento, a ferramenta só analisa TCP por conexão e UDP.
 
 Ainda, a ferramenta pode converter o output da análise em um JSON, caso seja necessário guardá-lo em um formato de serialização universal (possibilitando o uso do resultado da análise facilmente em qualquer outra aplicação).
 
