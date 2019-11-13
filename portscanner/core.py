@@ -1,6 +1,6 @@
 import socket
 from enum import Enum
-from multiprocessing.pool import ThreadPool
+from concurrent.futures import ThreadPoolExecutor, wait
 
 
 class ScanMethod(Enum):
@@ -24,11 +24,21 @@ class ScanStatus(Enum):
     CLOSED_FILTERED = 'Closed | Filtered'
 
 
+class ScanTarget:
+    """
+    Classe que representa o IP do alvo, os métodos de scan a serem usados e as portas para cada método
+    """
+
+    def __init__(self, ip: str, methods_ports: dict):
+        self.ip = ip
+        self.methods_ports = methods_ports
+
+
 class ScanResult:
     """
     Classe que receberá informações do scan de um certo ip numa certa porta, como:
     - Método usado para scannear
-    - Se estava aberta, fechada ou filtrada
+    - Se estava aberta e/ou fechada e/ou filtrada
     """
 
     def __init__(self, method: ScanMethod, ip: str, port: int):
@@ -55,12 +65,11 @@ class ScanResult:
 class ScanController:
     """
     Classe que se responsabilizará por fazer os scans
-    Precisa do ip do destino e uma coleção de portas a se fazer o scan
+    Precisa do scan target para realizar os scans
     """
 
-    def __init__(self, ip: str, ports: list):
-        self.ip = ip
-        self.ports = ports
+    def __init__(self, scan_target: ScanTarget):
+        self.scan_target = scan_target
 
     def __tcp_scan(self, port: int) -> ScanResult:
         """
@@ -72,8 +81,8 @@ class ScanController:
         """
         con = socket.socket()
         con.settimeout(0.5)
-        dest = (self.ip, port)
-        scan_result = ScanResult(ScanMethod.TCP, self.ip, port)
+        dest = (self.scan_target.ip, port)
+        scan_result = ScanResult(ScanMethod.TCP, self.scan_target.ip, port)
 
         try:
             con.connect(dest)
@@ -102,8 +111,8 @@ class ScanController:
         """
         con = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         con.settimeout(0.5)
-        dest = (self.ip, port)
-        scan_result = ScanResult(ScanMethod.UDP, self.ip, port)
+        dest = (self.scan_target.ip, port)
+        scan_result = ScanResult(ScanMethod.UDP, self.scan_target.ip, port)
 
         try:
             con.connect(dest)
@@ -136,40 +145,31 @@ class ScanController:
         """
         print(self.__udp_scan(port))
 
-    def scan(self, methods: list, threads_number: int) -> None:
+    def scan(self, threads_number: int) -> None:
         """
         Realiza o scan, exibindo os resultados em texto plano
-        :param methods: Lista com os métodos de scan a serem executados
         :param threads_number: Número de thread workers a ser criada pelo pool
         """
-        pool = ThreadPool(threads_number)
+        with ThreadPoolExecutor(max_workers=threads_number) as executor:
+            if ScanMethod.TCP in self.scan_target.methods_ports:
+                wait([executor.submit(self.__print_tcp_scan, p) for p in self.scan_target.methods_ports[ScanMethod.TCP]])
 
-        if ScanMethod.TCP in methods:
-            pool.map(self.__print_tcp_scan, self.ports)
+            if ScanMethod.UDP in self.scan_target.methods_ports:
+                wait([executor.submit(self.__print_udp_scan, p) for p in self.scan_target.methods_ports[ScanMethod.UDP]])
 
-        if ScanMethod.UDP in methods:
-            pool.map(self.__print_udp_scan, self.ports)
-
-        pool.close()
-        pool.join()
-
-    def scan_to_list(self, methods: list, threads_number: int) -> list:
+    def scan_to_list(self, threads_number: int) -> list:
         """
         Realiza o scan, jogando os resultados para uma lista a parte
-        :param methods: Lista com os métodos de scan a serem executados
         :param threads_number: Número de thread workers a ser criada pelo pool
         :return: Uma lista com os resultados do scan
         """
         results = list()
-        pool = ThreadPool(threads_number)
 
-        if ScanMethod.TCP in methods:
-            results.extend(pool.map(self.__tcp_scan, self.ports))
+        with ThreadPoolExecutor(max_workers=threads_number) as executor:
+            if ScanMethod.TCP in self.scan_target.methods_ports:
+                results.extend(executor.map(self.__tcp_scan, self.scan_target.methods_ports[ScanMethod.TCP]))
 
-        if ScanMethod.UDP in methods:
-            results.extend(pool.map(self.__udp_scan, self.ports))
-
-        pool.close()
-        pool.join()
+            if ScanMethod.UDP in self.scan_target.methods_ports:
+                results.extend(executor.map(self.__udp_scan, self.scan_target.methods_ports[ScanMethod.UDP]))
 
         return results

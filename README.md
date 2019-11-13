@@ -24,9 +24,9 @@ Ainda, a ferramenta pode converter o output da análise em um JSON, caso seja ne
 
 ### Exemplos de uso
 ```console
-python3 portscanner.py --ip 127.0.0.1 --ports 80,443,22 --tcp
-python portscanner.py --ip 127.0.0.1 --ports 53,22 --udp
-./portscanner.py --ip 127.0.0.1 --ports 80,443 --tcp --udp --json
+./portscanner.py --ip 127.0.0.1 --ports T:80,443,22
+./portscanner.py --ip 127.0.0.1 --ports U:53,161,162
+./portscanner.py --ip 127.0.0.1 --ports T:80,443,22 --ports U:53,161,162 --json
 ```
 
 OBS: Informações de uso da ferramenta estão disponíveis ao executar o programa sem nenhum argumento ou ao chamar "--help".

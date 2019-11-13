@@ -3,7 +3,7 @@
 import json
 
 from portscanner.argumentparser import ArgumentParser
-from portscanner.core import ScanController
+from portscanner.core import ScanController, ScanTarget
 
 
 def main() -> None:
@@ -12,20 +12,17 @@ def main() -> None:
     if not arg_parser.has_valid_args():
         arg_parser.help_message()
 
-    if not arg_parser.has_allowed_ports():
-        print('There are given ports which doesnt exists')
-        exit(1)
-
-    ps = ScanController(arg_parser.ip, arg_parser.ports)
+    st = ScanTarget(arg_parser.ip, arg_parser.methods_ports)
+    ps = ScanController(st)
 
     if arg_parser.json:
-        results = ps.scan_to_list(arg_parser.methods, arg_parser.threads)
+        results = ps.scan_to_list(arg_parser.threads)
         json_object = json.dumps(results, default=lambda sr: sr.__dict__(), indent=4)
         print(json_object)
 
     else:
         print("METHOD\tIP\t\tPORT\tSTATUS")
-        ps.scan(arg_parser.methods, arg_parser.threads)
+        ps.scan(arg_parser.threads)
 
 
 if __name__ == '__main__':
