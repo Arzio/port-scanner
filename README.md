@@ -18,9 +18,9 @@ After installing or using an existent Python runtime, just clone the repository 
 
 You can use the argument "--help" to see more details about the usage.
 ```
-./portscanner.py --ip 127.0.0.1 --ports T:80,443,22
-./portscanner.py --ip 127.0.0.1 --ports U:53,161,162
-./portscanner.py --ip 127.0.0.1 --ports T:80,443,22 --ports U:53,161,162 --json
+./portscanner --ip 127.0.0.1 --ports T:80,443,22
+./portscanner --ip 127.0.0.1 --ports U:53,161,162
+./portscanner --ip 127.0.0.1 --ports T:80,443,22 --ports U:53,161,162 --json
 ```
 
 ## Contributing

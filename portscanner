@@ -2,8 +2,8 @@
 
 import json
 
-from portscanner.argumentparser import ArgumentParser, help_message
-from portscanner.core import ScanController, ScanTarget
+from src.argumentparser import ArgumentParser, help_message
+from src.core import ScanController, ScanTarget
 
 
 def main():

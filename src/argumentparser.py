@@ -1,7 +1,7 @@
 import re
 import sys
 
-from portscanner.core import ScanMethod
+from src.core import ScanMethod
 
 
 def help_message():
