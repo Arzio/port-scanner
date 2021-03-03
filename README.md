@@ -6,7 +6,7 @@ At the moment, it only uses the TCP CONNECT method for scanning TCP ports.
 
 Moreover, it can convert the result output to a JSON.
 
-[![asciicast](https://asciinema.org/a/qlBZW4FSmBO0KYRCTv3XcwKWW.svg)](https://asciinema.org/a/qlBZW4FSmBO0KYRCTv3XcwKWW)
+[Demo](demo.gif)
 
 ## Installation
 
