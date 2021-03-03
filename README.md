@@ -6,6 +6,8 @@ At the moment, it only uses the TCP CONNECT method for scanning TCP ports.
 
 Moreover, it can convert the result output to a JSON.
 
+[![asciicast](https://asciinema.org/a/qlBZW4FSmBO0KYRCTv3XcwKWW.svg)](https://asciinema.org/a/qlBZW4FSmBO0KYRCTv3XcwKWW)
+
 ## Installation
 
 It was made with Python **3.7.x**, so it's guaranteed to run on it. However, it's expected to run on every **3.x.x** version.
@@ -22,6 +24,7 @@ You can use the argument "--help" to see more details about the usage.
 ```
 
 ## Contributing
+
 [CONTRIBUTING](CONTRIBUTING.md)
 
 ## License
